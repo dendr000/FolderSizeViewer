@@ -43,9 +43,25 @@
 - **검증**: `user32.dll` `EnumWindows`로 실제 창 핸들과 타이틀("폴더 크기 보기")이 정상 표시됨을
   확인. 사용자 육안 확인은 별도 요청 예정 (에이전트가 데스크톱 스크린샷을 직접 찍을 수단이 없음).
 
+## 2026-09-27 — 정리 + Git 커밋/푸시
+
+- `C:\dev\FolderSizeColumn`(1차 폐기 실험) 셸 확장 등록 해제 후 폴더 삭제.
+- `FolderSizeViewer`를 git 저장소로 초기화, GitHub 비공개 저장소
+  [dendr000/FolderSizeViewer](https://github.com/dendr000/FolderSizeViewer)로 푸시.
+  빌드 산출물(`*.exe`, `*.pdb`, `*.obj`)은 `.gitignore`로 제외.
+
+## 2026-09-27 — 버그 수정: 마우스 휠 스크롤 안 됨
+
+- **증상**: 실행 파일에서 폴더 목록에 마우스 휠을 굴려도 스크롤이 되지 않음.
+- **원인**: `ListView`를 별도 `ScrollViewer`로 한 번 더 감싸고 있었음. `ListView`는 기본
+  템플릿에 자체 `ScrollViewer`를 이미 내장하고 있는데, 바깥쪽 `ScrollViewer`가 안쪽에
+  무제한 높이를 줘버려서 안쪽 스크롤뷰어가 "스크롤할 내용 없음" 상태가 되고, 그 상태에서도
+  휠 이벤트를 스스로 처리(Handled)해버려 바깥쪽으로 이벤트가 전달되지 않았음
+  (ListView/ListBox/DataGrid를 ScrollViewer로 다시 감싸면 흔히 발생하는 WPF 함정).
+- **수정**: 바깥쪽 `ScrollViewer` 래퍼를 제거하고 `ListView`가 자체 스크롤을 담당하도록 변경
+  (`MainWindow.cs`의 `BuildListView()`).
+
 ## 다음에 할 일 / 주의할 점
 
 - 사용자가 실제로 앱을 열어보고 라이트/다크 전환·애니메이션·정렬·탐색이 기대대로 동작하는지
   확인 필요.
-- `C:\dev\FolderSizeColumn`(1차 폐기 실험)은 레지스트리에 무해하게 남아있음 — 정리 원하면
-  `unregister.ps1` 실행 후 폴더 삭제.
