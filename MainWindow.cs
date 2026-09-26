@@ -222,7 +222,7 @@ namespace FolderSizeViewer
             btn.Template = template;
         }
 
-        private ScrollViewer BuildListView()
+        private ListView BuildListView()
         {
             _listView = new ListView
             {
@@ -264,8 +264,8 @@ namespace FolderSizeViewer
             _listView.ContextMenu = new ContextMenu();
             _listView.ContextMenu.Items.Add(openMenu);
 
-            var scrollHost = new ScrollViewer { Content = _listView, VerticalScrollBarVisibility = ScrollBarVisibility.Auto, Background = Brushes.Transparent };
-            return scrollHost;
+            ScrollViewer.SetVerticalScrollBarVisibility(_listView, ScrollBarVisibility.Auto);
+            return _listView;
         }
 
         private Style BuildHeaderStyle()
