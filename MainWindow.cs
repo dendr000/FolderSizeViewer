@@ -1,3 +1,4 @@
+// Copyright (c) dendr000. MIT License.
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
@@ -36,8 +37,8 @@ namespace FolderSizeViewer
         private bool _sortAscending = false;
         private bool _isScanning;
 
-        private static readonly Geometry FolderGeometry = Geometry.Parse("M3,6 L9,6 L11,8 L21,8 L21,18 L3,18 Z");
-        private static readonly Geometry FileGeometry = Geometry.Parse("M6,3 L15,3 L18,6 L18,21 L6,21 Z");
+        private static readonly Geometry FolderGeometry = Icons.FolderGeometry();
+        private static readonly Geometry FileGeometry = Icons.FileGeometry();
 
         public MainWindow(string startPath)
         {
@@ -237,7 +238,7 @@ namespace FolderSizeViewer
 
             _colName = new GridViewColumn { Header = "이름", Width = 400, CellTemplate = BuildNameTemplate() };
             _colType = new GridViewColumn { Header = "종류", Width = 140, CellTemplate = BuildTextTemplate("TypeLabel", _theme.TextSecondary) };
-            _colSize = new GridViewColumn { Header = "크기", Width = 160, CellTemplate = BuildSizeTemplate() };
+            _colSize = new GridViewColumn { Header = "디스크 사용량", Width = 160, CellTemplate = BuildSizeTemplate() };
 
             gridView.Columns.Add(_colName);
             gridView.Columns.Add(_colType);
@@ -549,7 +550,7 @@ namespace FolderSizeViewer
                 foreach (var file in SafeEnumerateFiles(path))
                 {
                     long len = 0;
-                    try { len = new FileInfo(file).Length; } catch { }
+                    try { len = DiskSize.GetFileSizeOnDisk(file); } catch { }
                     var row = new RowItem
                     {
                         FullPath = file,
@@ -694,7 +695,7 @@ namespace FolderSizeViewer
                 foreach (var file in dirInfo.EnumerateFiles())
                 {
                     if (token.IsCancellationRequested) return total;
-                    try { total += file.Length; }
+                    try { total += DiskSize.GetFileSizeOnDisk(file.FullName); }
                     catch (IOException) { }
                     catch (UnauthorizedAccessException) { }
                 }

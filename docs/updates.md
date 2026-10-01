@@ -61,7 +61,32 @@
 - **수정**: 바깥쪽 `ScrollViewer` 래퍼를 제거하고 `ListView`가 자체 스크롤을 담당하도록 변경
   (`MainWindow.cs`의 `BuildListView()`).
 
+## 2026-10-01 — 크기 계산을 "디스크 할당 크기" 기준으로 변경
+
+- 사용자 피드백: 가상 디스크(VHD) 등 논리 크기와 실제 디스크 사용량이 크게 다른 파일이 있어
+  크기가 왜곡되어 보인다는 지적. `DiskSize.cs` 신설, `GetCompressedFileSizeW` + 클러스터 크기
+  올림으로 변경. 희소 파일(1GB 논리/0바이트 실사용)과 일반 파일(29바이트 → 4096바이트)로
+  검증 완료. 자세한 내용: `docs/features/folder-size-calculation.md`,
+  `docs/troubleshooting.md` 3번.
+- "크기" 컬럼 이름을 "디스크 사용량"으로 변경.
+
+## 2026-10-01 — `C:\dev\docs\guidelines` 필수 지침 체계 반영
+
+- 이 세션에서 처음으로 `C:\dev\docs\guidelines\000 _start.md` 체계를 확인. 이 프로젝트가
+  그동안 지침을 모른 채 진행되어 있었던 것을 소급 적용:
+  - **010 code-rules 위반 발견 및 수정**: UI 아이콘을 `Icons.cs`/`MainWindow.cs`에 Geometry
+    문자열로 직접 하드코딩하고 있었음 → `assets/icons/*.svg` 로 분리하고 `SvgIcon.cs`
+    (직접 만든 최소 SVG 파서)로 읽어오도록 리팩터링.
+  - **020 copyright 적용**: 모든 `.cs`/`.ps1` 파일 상단에 저작권 한 줄, 루트 `LICENSE`(MIT) 추가.
+  - **030 completion-checklist 적용**: 루트 `CHANGELOG.md`(버전+시각 형식) 신설,
+    `docs/filetree.md`·`docs/features/`·`docs/troubleshooting.md`·`README.md` 신설.
+  - `CLAUDE.md` 신설 (필수 지침 루트를 가리키는 첫 줄 포함).
+- **주의**: `docs/updates.md`(이 파일, 서사적 개발 일지)와 루트 `CHANGELOG.md`(버전 번호가 붙은
+  간결한 변경 로그)는 역할이 다르다 — 앞으로도 코드가 바뀌면 **둘 다** 갱신한다.
+
 ## 다음에 할 일 / 주의할 점
 
-- 사용자가 실제로 앱을 열어보고 라이트/다크 전환·애니메이션·정렬·탐색이 기대대로 동작하는지
-  확인 필요.
+- 사용자가 실제로 앱을 열어보고 라이트/다크 전환·애니메이션·정렬·탐색·새 아이콘이 기대대로
+  동작하는지 확인 필요.
+- 새 코드 파일을 추가하면 `000 _start.md` 3장 "지침 파일 목록"에 등록하는 규칙은 이 프로젝트
+  코드가 아니라 지침 저장소(`C:\dev\docs\guidelines`) 쪽 작업이니 혼동하지 말 것.

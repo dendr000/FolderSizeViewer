@@ -1,3 +1,4 @@
+// Copyright (c) dendr000. MIT License.
 using System;
 using System.Globalization;
 using System.Windows;
