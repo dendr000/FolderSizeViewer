@@ -33,8 +33,8 @@ namespace FolderSizeViewer
 
         private string _currentPath;
         private CancellationTokenSource _scanCts;
-        private string _sortProperty = "SizeBytes";
-        private bool _sortAscending = false;
+        private string _sortProperty = "Name";
+        private bool _sortAscending = true;
         private bool _isScanning;
 
         private static readonly Geometry FolderGeometry = Icons.FolderGeometry();
@@ -507,6 +507,8 @@ namespace FolderSizeViewer
         {
             var view = CollectionViewSource.GetDefaultView(_items);
             view.SortDescriptions.Clear();
+            // 정렬 기준과 무관하게 폴더를 파일보다 항상 위에 둔다 (탐색기와 동일한 관례).
+            view.SortDescriptions.Add(new SortDescription("IsDirectory", ListSortDirection.Descending));
             view.SortDescriptions.Add(new SortDescription(_sortProperty, _sortAscending ? ListSortDirection.Ascending : ListSortDirection.Descending));
         }
 
@@ -661,8 +663,6 @@ namespace FolderSizeViewer
             }
 
             RecomputeBarFractions();
-            _sortProperty = "SizeBytes";
-            _sortAscending = false;
             ApplySort();
             _statusText.Text = _items.Count + "개 드라이브";
         }

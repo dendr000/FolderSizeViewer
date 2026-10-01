@@ -31,7 +31,22 @@
 - **해결**: `GetCompressedFileSizeW` + 클러스터 크기 올림으로 "디스크 할당 크기" 기준으로
   계산하도록 변경 (`DiskSize.cs`). 자세한 내용은 `docs/features/folder-size-calculation.md`.
 
-## 4. `System.IO.Path` 와 `System.Windows.Shapes.Path` 이름 충돌
+## 4. 폴더 안 항목 순서가 뒤죽박죽으로 보임
+
+- **증상**: 폴더를 열 때마다 기본 정렬이 이름순이 아니라 뒤죽박죽으로 보이고, 폴더 크기가
+  계산되는 동안 행 순서가 계속 바뀜.
+- **원인**: 기본 정렬 기준(`_sortProperty`/`_sortAscending`)이 드라이브 목록 화면과 폴더 뷰가
+  **같은 필드를 공유**하고 있었는데, 드라이브 목록(`LoadDriveList`)이 자기 화면을 그릴 때마다
+  이 공유 상태를 "크기 내림차순"으로 강제로 덮어쓰고 있었음. 그래서 드라이브 → 폴더로 들어갈
+  때마다 폴더 뷰도 크기순으로 시작됐고, 폴더 크기는 백그라운드에서 서서히 채워지니 그동안
+  행 순서가 계속 들썩였음.
+- **해결**: 기본 정렬을 이름 오름차순으로 바꾸고, 드라이브 목록이 정렬 상태를 더 이상 강제로
+  덮어쓰지 않게 함. 추가로 정렬 기준과 무관하게 폴더가 항상 파일보다 위에 오도록
+  `IsDirectory` 내림차순을 1차 정렬 기준으로 넣었다 (`MainWindow.cs`의 `ApplySort()`).
+- **곁들여 고친 것**: `RowItem.IsDirectory`가 필드라서 `SortDescription`에 못 썼다
+  (WPF의 정렬은 `TypeDescriptor` 기반이라 프로퍼티만 인식, 필드는 예외가 남) — 프로퍼티로 변경.
+
+## 5. `System.IO.Path` 와 `System.Windows.Shapes.Path` 이름 충돌
 
 - **증상**: `using System.IO;` 와 `using System.Windows.Shapes;` 를 동시에 쓰면 `Path` 라는
   이름을 쓸 때마다 `CS0104: 'Path'은(는) ... 모호한 참조입니다` 컴파일 오류가 남.

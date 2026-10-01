@@ -14,7 +14,7 @@ namespace FolderSizeViewer
         }
 
         public string FullPath;
-        public bool IsDirectory;
+        public bool IsDirectory { get; set; }
 
         private string _name;
         public string Name
