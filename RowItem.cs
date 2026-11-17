@@ -51,6 +51,30 @@ namespace FolderSizeViewer
             set { _isCalculating = value; Raise("IsCalculating"); }
         }
 
+        private RowMark _mark;
+        public RowMark Mark
+        {
+            get { return _mark; }
+            set
+            {
+                _mark = value;
+                Raise("Mark");
+                Raise("IsMarked");
+                Raise("IsInheritedMark");
+            }
+        }
+
+        public bool IsMarked { get { return _mark == RowMark.Marked; } }
+        public bool IsInheritedMark { get { return _mark == RowMark.Inherited; } }
+
+        // 이전에 계산해 둔 값을 보여 주는 중이며 아직 새로 확인하지 않았다.
+        private bool _isCached;
+        public bool IsCached
+        {
+            get { return _isCached; }
+            set { _isCached = value; Raise("IsCached"); }
+        }
+
         private double _barFraction;
         public double BarFraction
         {

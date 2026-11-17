@@ -1,5 +1,3 @@
-필수 지침: "C:\dev\docs\guidelines\000 _start.md" 를 먼저 읽는다.
-
 # 폴더 크기 보기 (FolderSizeViewer)
 
 탐색기가 보여주지 않는 폴더 크기를 보여주는 독립 실행형 WPF 유틸리티.
@@ -16,7 +14,7 @@
 2. UI 아이콘은 `assets/icons/*.svg` 로 분리하고 `SvgIcon.cs` 로 읽어온다. 코드에 SVG/Geometry
    문자열을 직접 넣지 않는다.
 3. `System.IO.Path` 와 `System.Windows.Shapes.Path` 이름이 겹치니 항상 전체 경로로 구분해서 쓴다.
-4. 삭제·이동 등 파일 관리 기능은 넣지 않는다 — 이 도구는 "보기" 전용.
+4. 파일을 삭제·이동하는 기능은 넣지 않는다. "삭제 가능" 표시는 앱 안에만 기록하는 참고용이며 파일은 건드리지 않는다.
 
 ## 배경지식 (자세한 내용은 `docs/plan.md`, `docs/updates.md`)
 

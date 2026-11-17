@@ -56,3 +56,20 @@
 - **해결**: 도형 쪽은 항상 `System.Windows.Shapes.Path`로 전체 경로를 써서 구분
   (`MainWindow.cs`, `SvgIcon.cs`). `System.IO.Path.GetFileName`/`GetExtension`처럼 파일 경로
   쪽도 모호해지는 자리는 마찬가지로 전체 경로로 명시.
+
+## 6. 우클릭 메뉴가 우클릭한 행이 아닌 다른 행에 적용됨
+
+- **증상**: 행을 우클릭해 "탐색기에서 열기"를 누르면, 우클릭한 행이 아니라 그 전에 선택해 둔
+  행이 열림. 폴더에 표시를 거는 기능에서는 엉뚱한 폴더를 표시할 수 있는 위험한 동작.
+- **원인**: WPF `ListView`는 우클릭만으로는 행을 선택하지 않는다. 메뉴 동작이 `SelectedItem`을
+  읽고 있어서 이전 선택 행이 대상이 됨.
+- **해결**: 우클릭 시(`PreviewMouseRightButtonDown`) 클릭한 행을 먼저 선택하고, 메뉴는 열릴 때
+  (`ContextMenuOpening`) 그 행에 맞춰 새로 만든다. 행이 없는 빈 곳을 우클릭하면 메뉴를 열지 않는다.
+
+## 7. 화면 시험에서 시험용 기록 파일이 적용되지 않음
+
+- **증상**: `APPDATA` 환경변수를 임시 폴더로 바꿔 앱을 띄웠는데도 시험용 표시가 보이지 않음.
+- **원인**: `Environment.GetFolderPath(ApplicationData)`는 `APPDATA` 환경변수가 아니라 셸 API로
+  경로를 구하므로 환경변수를 바꿔도 소용없음(다행히 실제 기록은 건드려지지 않음).
+- **해결**: 시험용으로 `FOLDERSIZEVIEWER_MARKS_FILE`, `FOLDERSIZEVIEWER_SIZES_FILE` 환경변수로
+  기록 파일 경로를 바꿀 수 있게 함.

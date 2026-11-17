@@ -16,6 +16,8 @@ $sources = @(
     Join-Path $PSScriptRoot 'Icons.cs'
     Join-Path $PSScriptRoot 'DiskSize.cs'
     Join-Path $PSScriptRoot 'SvgIcon.cs'
+    Join-Path $PSScriptRoot 'DeletableMarks.cs'
+    Join-Path $PSScriptRoot 'SizeCache.cs'
 )
 
 $iconsDir = Join-Path $PSScriptRoot 'assets\icons'

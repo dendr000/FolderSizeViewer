@@ -27,6 +27,10 @@ namespace FolderSizeViewer
         private ListView _listView;
         private GridViewColumn _colName, _colType, _colSize;
         private TextBlock _statusText;
+        private TextBlock _markText;
+        private readonly DeletableMarks _marks = new DeletableMarks(DeletableMarks.DefaultFilePath());
+        private readonly SizeCache _sizeCache = new SizeCache(SizeCache.DefaultFilePath());
+        private bool _sizeCacheBroken;
         private FrameworkElement _spinner;
         private ContentControl _themeIconHost;
         private Border _contentBorder;
@@ -55,7 +59,20 @@ namespace FolderSizeViewer
 
             BuildUi();
 
+            string marksError = null;
+            try { _marks.Load(); }
+            catch (Exception ex) { marksError = "표시 기록을 읽지 못했습니다: " + ex.Message; }
+
+            // 크기 기억은 없어도 앱이 동작하므로, 못 읽으면 빈 상태로 시작한다.
+            try
+            {
+                _sizeCache.Load();
+                _sizeCache.PruneOlderThan(DateTime.UtcNow.AddDays(-90));
+            }
+            catch { _sizeCacheBroken = true; }
+
             NavigateTo(!string.IsNullOrEmpty(startPath) && Directory.Exists(startPath) ? startPath : null);
+            if (marksError != null) FlashStatus(marksError);
         }
 
         // ---------- UI construction ----------
@@ -255,18 +272,103 @@ namespace FolderSizeViewer
                 else { try { System.Diagnostics.Process.Start(row.FullPath); } catch { } }
             };
 
-            var openMenu = new MenuItem { Header = "탐색기에서 열기" };
-            openMenu.Click += (s, e) =>
+            // 우클릭한 행을 먼저 선택해, 메뉴가 이전에 선택돼 있던 다른 행에 적용되는 사고를 막는다.
+            _listView.PreviewMouseRightButtonDown += (s, e) =>
             {
-                var row = _listView.SelectedItem as RowItem;
-                if (row == null) return;
-                try { System.Diagnostics.Process.Start("explorer.exe", "/select,\"" + row.FullPath + "\""); } catch { }
+                var item = FindListViewItem(e.OriginalSource as DependencyObject);
+                if (item != null) { item.IsSelected = true; item.Focus(); }
             };
+            _listView.ContextMenuOpening += OnContextMenuOpening;
             _listView.ContextMenu = new ContextMenu();
-            _listView.ContextMenu.Items.Add(openMenu);
 
             ScrollViewer.SetVerticalScrollBarVisibility(_listView, ScrollBarVisibility.Auto);
             return _listView;
+        }
+
+        private static ListViewItem FindListViewItem(DependencyObject source)
+        {
+            while (source != null && !(source is ListViewItem))
+            {
+                source = source is Visual || source is System.Windows.Media.Media3D.Visual3D
+                    ? VisualTreeHelper.GetParent(source)
+                    : LogicalTreeHelper.GetParent(source);
+            }
+            return source as ListViewItem;
+        }
+
+        private void OnContextMenuOpening(object sender, ContextMenuEventArgs e)
+        {
+            var row = _listView.SelectedItem as RowItem;
+            var menu = _listView.ContextMenu;
+            if (row == null) { e.Handled = true; return; }
+            menu.Items.Clear();
+
+            var openMenu = new MenuItem { Header = "탐색기에서 열기" };
+            openMenu.Click += (s, a) =>
+            {
+                try { System.Diagnostics.Process.Start("explorer.exe", "/select,\"" + row.FullPath + "\""); } catch { }
+            };
+            menu.Items.Add(openMenu);
+
+            if (row.IsDirectory && DeletableMarks.IsMarkable(row.FullPath))
+            {
+                menu.Items.Add(new Separator());
+                if (row.Mark == RowMark.Marked)
+                {
+                    var unmark = new MenuItem { Header = "삭제 가능 표시 해제" };
+                    unmark.Click += (s, a) => SetMark(row, false);
+                    menu.Items.Add(unmark);
+                }
+                else if (row.Mark == RowMark.Inherited)
+                {
+                    menu.Items.Add(new MenuItem { Header = "상위 폴더가 이미 삭제 가능으로 표시됨", IsEnabled = false });
+                }
+                else
+                {
+                    var mark = new MenuItem { Header = "삭제해도 되는 폴더로 표시 (이 앱에만 기록)" };
+                    mark.Click += (s, a) => SetMark(row, true);
+                    menu.Items.Add(mark);
+                }
+            }
+        }
+
+        // ---------- 삭제 가능 표시 ----------
+
+        private void SetMark(RowItem row, bool mark)
+        {
+            if (mark) _marks.Add(row.FullPath);
+            else _marks.Remove(row.FullPath);
+
+            try { _marks.Save(); }
+            catch (Exception ex) { FlashStatus("표시를 저장하지 못했습니다: " + ex.Message); }
+
+            foreach (var r in _items)
+                if (r.IsDirectory) r.Mark = _marks.GetState(r.FullPath);
+            RefreshMarkSummary();
+        }
+
+        private void RefreshMarkSummary()
+        {
+            if (_markText == null) return;
+
+            var parts = new List<string>();
+            if (!string.IsNullOrEmpty(_currentPath) && _marks.GetState(_currentPath) != RowMark.None)
+                parts.Add("이 폴더는 삭제 가능으로 표시됨");
+
+            int count = 0;
+            long total = 0;
+            bool pending = false;
+            foreach (var r in _items)
+            {
+                if (!r.IsMarked) continue;
+                count++;
+                if (r.IsCalculating) pending = true; else total += r.SizeBytes;
+            }
+            if (count > 0)
+                parts.Add(string.Format("삭제 가능 표시 {0}개 - {1}{2}", count, FormatSize(total), pending ? " (계산 중)" : ""));
+
+            _markText.Text = string.Join("   |   ", parts);
+            _markText.Visibility = parts.Count > 0 ? Visibility.Visible : Visibility.Collapsed;
         }
 
         private Style BuildHeaderStyle()
@@ -353,8 +455,31 @@ namespace FolderSizeViewer
             stack.AppendChild(folderIcon);
             stack.AppendChild(fileIcon);
             stack.AppendChild(text);
+            stack.AppendChild(BuildMarkChip("삭제 가능", "IsMarked", 1.0));
+            stack.AppendChild(BuildMarkChip("상위 폴더가 삭제 가능", "IsInheritedMark", 0.6));
             template.VisualTree = stack;
             return template;
+        }
+
+        private FrameworkElementFactory BuildMarkChip(string label, string visibleWhen, double opacity)
+        {
+            var chip = new FrameworkElementFactory(typeof(Border));
+            chip.SetValue(Border.BackgroundProperty, _theme.MarkBackground);
+            chip.SetValue(Border.CornerRadiusProperty, new CornerRadius(9));
+            chip.SetValue(Border.PaddingProperty, new Thickness(8, 1, 8, 2));
+            chip.SetValue(FrameworkElement.MarginProperty, new Thickness(10, 0, 0, 0));
+            chip.SetValue(FrameworkElement.VerticalAlignmentProperty, VerticalAlignment.Center);
+            chip.SetValue(UIElement.OpacityProperty, opacity);
+            chip.SetBinding(UIElement.VisibilityProperty, new Binding(visibleWhen) { Converter = new BoolToVisibilityConverter() });
+
+            var text = new FrameworkElementFactory(typeof(TextBlock));
+            text.SetValue(TextBlock.TextProperty, label);
+            text.SetValue(TextBlock.ForegroundProperty, _theme.MarkForeground);
+            text.SetValue(TextBlock.FontSizeProperty, 11.0);
+            text.SetValue(TextBlock.FontWeightProperty, FontWeights.SemiBold);
+            text.SetValue(TextBlock.TextWrappingProperty, TextWrapping.NoWrap);
+            chip.AppendChild(text);
+            return chip;
         }
 
         private DataTemplate BuildTextTemplate(string bindingPath, Brush foreground)
@@ -376,10 +501,16 @@ namespace FolderSizeViewer
             stack.SetValue(FrameworkElement.MarginProperty, new Thickness(0, 2, 0, 2));
 
             var text = new FrameworkElementFactory(typeof(TextBlock));
+            text.Name = "SizeLabel";
             text.SetValue(TextBlock.ForegroundProperty, _theme.TextPrimary);
             text.SetValue(TextBlock.FontSizeProperty, 13.0);
             text.SetValue(TextBlock.TextAlignmentProperty, TextAlignment.Right);
             text.SetBinding(TextBlock.TextProperty, new Binding("SizeText"));
+
+            // 저장해 둔 값을 보여 주는 동안은 흐리게 해서, 아직 새로 확인하지 않은 값임을 알린다.
+            var cachedTrigger = new DataTrigger { Binding = new Binding("IsCached"), Value = true };
+            cachedTrigger.Setters.Add(new Setter(UIElement.OpacityProperty, 0.5) { TargetName = "SizeLabel" });
+            template.Triggers.Add(cachedTrigger);
 
             var track = new FrameworkElementFactory(typeof(Border));
             track.SetValue(Border.BackgroundProperty, _theme.ControlBackground);
@@ -416,9 +547,21 @@ namespace FolderSizeViewer
             var grid = new Grid();
             grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
             grid.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
+            grid.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
 
-            _statusText = new TextBlock { Foreground = _theme.TextSecondary, FontSize = 12, VerticalAlignment = VerticalAlignment.Center };
+            _statusText = new TextBlock { Foreground = _theme.TextSecondary, FontSize = 12, VerticalAlignment = VerticalAlignment.Center, TextTrimming = TextTrimming.CharacterEllipsis };
             Grid.SetColumn(_statusText, 0);
+
+            _markText = new TextBlock
+            {
+                Foreground = _theme.MarkForeground,
+                FontSize = 12,
+                FontWeight = FontWeights.SemiBold,
+                VerticalAlignment = VerticalAlignment.Center,
+                Margin = new Thickness(12, 0, 12, 0),
+                Visibility = Visibility.Collapsed
+            };
+            Grid.SetColumn(_markText, 1);
 
             _spinner = Icons.Refresh(_theme.Accent);
             _spinner.Width = 14;
@@ -426,9 +569,10 @@ namespace FolderSizeViewer
             _spinner.Visibility = Visibility.Collapsed;
             _spinner.RenderTransformOrigin = new Point(0.5, 0.5);
             _spinner.RenderTransform = new RotateTransform(0);
-            Grid.SetColumn(_spinner, 1);
+            Grid.SetColumn(_spinner, 2);
 
             grid.Children.Add(_statusText);
+            grid.Children.Add(_markText);
             grid.Children.Add(_spinner);
             border.Child = grid;
             return border;
@@ -523,6 +667,7 @@ namespace FolderSizeViewer
             _upButton.IsEnabled = !string.IsNullOrEmpty(path);
             _items.Clear();
             _statusText.Text = "불러오는 중...";
+            RefreshMarkSummary();
 
             if (string.IsNullOrEmpty(path))
             {
@@ -543,8 +688,17 @@ namespace FolderSizeViewer
                         Name = System.IO.Path.GetFileName(dir),
                         TypeLabel = "폴더",
                         SizeText = "계산 중...",
-                        IsCalculating = true
+                        IsCalculating = true,
+                        Mark = _marks.GetState(dir)
                     };
+                    SizeCache.Entry cached;
+                    if (_sizeCache.TryGet(dir, out cached))
+                    {
+                        row.SizeBytes = cached.SizeBytes;
+                        row.SizeText = FormatSize(cached.SizeBytes);
+                        row.IsCalculating = false;
+                        row.IsCached = true;
+                    }
                     _items.Add(row);
                     dirRows.Add(row);
                 }
@@ -575,6 +729,7 @@ namespace FolderSizeViewer
             RecomputeBarFractions();
             ApplySort();
             PlayContentFadeIn();
+            RefreshMarkSummary();
             _statusText.Text = _items.Count + "개 항목" + (dirRows.Count > 0 ? " - 폴더 크기 계산 중..." : "");
 
             if (dirRows.Count > 0) ScanFolderSizesAsync(dirRows, token);
@@ -614,7 +769,10 @@ namespace FolderSizeViewer
                             row.SizeBytes = size;
                             row.SizeText = FormatSize(size);
                             row.IsCalculating = false;
+                            row.IsCached = false;
+                            _sizeCache.Set(row.FullPath, size, DateTime.UtcNow);
                             RecomputeBarFractions();
+                            RefreshMarkSummary();
                             _statusText.Text = string.Format("{0}개 항목 - 폴더 크기 계산 중 ({1}/{2})", _items.Count, doneCopy, dirRows.Count);
                         }));
                     }
@@ -629,6 +787,7 @@ namespace FolderSizeViewer
                         {
                             _statusText.Text = _items.Count + "개 항목";
                             SetScanning(false);
+                            SaveSizeCache();
                         }
                     }));
                 }
@@ -734,9 +893,18 @@ namespace FolderSizeViewer
                 : string.Format("{0:N2} {1}", value, units[unitIndex]);
         }
 
+        private void SaveSizeCache()
+        {
+            // 읽기에 실패한 상태에서 저장하면 기존 기록을 덮어써 잃게 되므로 건너뛴다.
+            if (_sizeCacheBroken) return;
+            try { _sizeCache.Save(); }
+            catch (Exception ex) { FlashStatus("크기 기억을 저장하지 못했습니다: " + ex.Message); }
+        }
+
         protected override void OnClosing(CancelEventArgs e)
         {
             if (_scanCts != null) _scanCts.Cancel();
+            SaveSizeCache();
             base.OnClosing(e);
         }
     }

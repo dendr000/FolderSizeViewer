@@ -21,11 +21,14 @@ namespace FolderSizeViewer
         public readonly SolidColorBrush ControlBackground = new SolidColorBrush();
         public readonly SolidColorBrush ControlHover = new SolidColorBrush();
         public readonly SolidColorBrush BarTrack = new SolidColorBrush();
+        public readonly SolidColorBrush MarkBackground = new SolidColorBrush();
+        public readonly SolidColorBrush MarkForeground = new SolidColorBrush();
 
         private struct Palette
         {
             public Color WindowBackground, SurfaceBackground, ToolbarBackground, Border, TextPrimary, TextSecondary,
-                Accent, AccentSoft, RowHover, RowAlternate, RowSelected, ControlBackground, ControlHover, BarTrack;
+                Accent, AccentSoft, RowHover, RowAlternate, RowSelected, ControlBackground, ControlHover, BarTrack,
+                MarkBackground, MarkForeground;
         }
 
         private static readonly Palette LightPalette = new Palette
@@ -44,6 +47,8 @@ namespace FolderSizeViewer
             ControlBackground = Color.FromRgb(0xF1, 0xF2, 0xF6),
             ControlHover = Color.FromRgb(0xE6, 0xE8, 0xF0),
             BarTrack = Color.FromRgb(0xC9, 0xD3, 0xFB),
+            MarkBackground = Color.FromRgb(0xFF, 0xEC, 0xCC),
+            MarkForeground = Color.FromRgb(0x9A, 0x5B, 0x00),
         };
 
         private static readonly Palette DarkPalette = new Palette
@@ -62,6 +67,8 @@ namespace FolderSizeViewer
             ControlBackground = Color.FromRgb(0x2A, 0x2B, 0x32),
             ControlHover = Color.FromRgb(0x34, 0x36, 0x3F),
             BarTrack = Color.FromRgb(0x40, 0x47, 0x6B),
+            MarkBackground = Color.FromRgb(0x4A, 0x3A, 0x1C),
+            MarkForeground = Color.FromRgb(0xFF, 0xC8, 0x6B),
         };
 
         public bool IsDark { get; private set; }
@@ -88,6 +95,8 @@ namespace FolderSizeViewer
             ControlBackground.Color = p.ControlBackground;
             ControlHover.Color = p.ControlHover;
             BarTrack.Color = p.BarTrack;
+            MarkBackground.Color = p.MarkBackground;
+            MarkForeground.Color = p.MarkForeground;
         }
 
         public void SwitchTo(bool isDark, TimeSpan duration)
@@ -110,6 +119,8 @@ namespace FolderSizeViewer
             Animate(ControlBackground, p.ControlBackground, duration);
             Animate(ControlHover, p.ControlHover, duration);
             Animate(BarTrack, p.BarTrack, duration);
+            Animate(MarkBackground, p.MarkBackground, duration);
+            Animate(MarkForeground, p.MarkForeground, duration);
         }
 
         private static void Animate(SolidColorBrush brush, Color target, TimeSpan duration)

@@ -14,6 +14,8 @@ FolderSizeViewer/
 ├── SvgIcon.cs               # assets/icons/*.svg 를 읽어 WPF Geometry/Shape로 변환하는 최소 파서
 ├── RowItem.cs              # 목록 한 줄을 표현하는 INotifyPropertyChanged 뷰모델
 ├── Converters.cs           # 바인딩 값 변환기 (크기→막대 너비, bool→Visibility)
+├── DeletableMarks.cs       # "삭제해도 되는 폴더" 표시를 경로 기준으로 앱 안에 저장 (파일은 건드리지 않음)
+├── SizeCache.cs            # 한 번 계산한 폴더 크기를 기억해 다음에 바로 보여 주기 위한 저장소
 ├── DiskSize.cs             # 파일의 "디스크 할당 크기" 계산 (GetCompressedFileSizeW 기반)
 ├── assets/
 │   └── icons/              # UI 아이콘 원본 (svg). 코드에 아이콘 마크업을 직접 넣지 않는다.
@@ -25,12 +27,19 @@ FolderSizeViewer/
 │       ├── sun.svg
 │       ├── moon.svg
 │       └── drive.svg
+├── tests/
+│   ├── test.ps1            # 임시 폴더에서 시험을 컴파일·실행 (실제 데이터 미사용)
+│   ├── DeletableMarksTests.cs
+│   └── SizeCacheTests.cs
 └── docs/
     ├── plan.md             # 계획서 — 기술 조사 과정, 아키텍처·디자인 결정 이유
     ├── updates.md          # 개발 일지 (서사적 기록, CHANGELOG.md의 상세 버전)
     ├── filetree.md         # 이 파일
     ├── troubleshooting.md  # 증상/원인/해결 기록
+    ├── plans/
+    │   └── 01-deletable-marks.md  # 삭제 가능 표시·크기 기억 계획서
     └── features/           # 기능별 설명 문서
+        ├── deletable-marks.md
         ├── folder-size-calculation.md
         ├── navigation.md
         └── theme-and-motion.md
