@@ -30,6 +30,7 @@ $wpf = "$fx\WPF"
 $xaml = (Get-ChildItem "$env:WINDIR\Microsoft.NET\assembly\GAC_MSIL\System.Xaml" -Recurse -Filter "System.Xaml.dll" | Select-Object -First 1).FullName
 
 & $csc /nologo /target:winexe /platform:anycpu `
+    /win32icon:"$PSScriptRoot\assets\app.ico" `
     /reference:System.dll `
     /reference:System.Core.dll `
     /reference:System.Xml.dll `

@@ -56,6 +56,7 @@ namespace FolderSizeViewer
             WindowStartupLocation = WindowStartupLocation.CenterScreen;
             Background = _theme.WindowBackground;
             FontFamily = new FontFamily("Segoe UI");
+            ApplyWindowIcon();
 
             BuildUi();
 
@@ -73,6 +74,22 @@ namespace FolderSizeViewer
 
             NavigateTo(!string.IsNullOrEmpty(startPath) && Directory.Exists(startPath) ? startPath : null);
             if (marksError != null) FlashStatus(marksError);
+        }
+
+        // exe 에 넣어 둔 앱 아이콘을 창 아이콘(제목 표시줄, 작업 표시줄)으로도 쓴다.
+        private void ApplyWindowIcon()
+        {
+            try
+            {
+                string exe = System.Diagnostics.Process.GetCurrentProcess().MainModule.FileName;
+                using (var icon = System.Drawing.Icon.ExtractAssociatedIcon(exe))
+                {
+                    if (icon == null) return;
+                    Icon = System.Windows.Interop.Imaging.CreateBitmapSourceFromHIcon(
+                        icon.Handle, Int32Rect.Empty, System.Windows.Media.Imaging.BitmapSizeOptions.FromEmptyOptions());
+                }
+            }
+            catch { }
         }
 
         // ---------- UI construction ----------

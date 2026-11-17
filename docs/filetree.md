@@ -17,7 +17,10 @@ FolderSizeViewer/
 ├── DeletableMarks.cs       # "삭제해도 되는 폴더" 표시를 경로 기준으로 앱 안에 저장 (파일은 건드리지 않음)
 ├── SizeCache.cs            # 한 번 계산한 폴더 크기를 기억해 다음에 바로 보여 주기 위한 저장소
 ├── DiskSize.cs             # 파일의 "디스크 할당 크기" 계산 (GetCompressedFileSizeW 기반)
+├── tools/
+│   └── make-icon.ps1       # assets/app.ico 를 다시 만드는 도구
 ├── assets/
+│   ├── app.ico             # 앱 아이콘 (16~256px, exe 와 창 아이콘에 사용)
 │   └── icons/              # UI 아이콘 원본 (svg). 코드에 아이콘 마크업을 직접 넣지 않는다.
 │       ├── folder.svg
 │       ├── file.svg
@@ -39,6 +42,7 @@ FolderSizeViewer/
     ├── plans/
     │   └── 01-deletable-marks.md  # 삭제 가능 표시·크기 기억 계획서
     └── features/           # 기능별 설명 문서
+        ├── app-icon.md
         ├── deletable-marks.md
         ├── folder-size-calculation.md
         ├── navigation.md
