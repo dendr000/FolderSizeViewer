@@ -53,6 +53,8 @@ namespace FolderSizeViewer
             _entries[full] = new Entry { SizeBytes = sizeBytes, ScannedUtc = scannedUtc };
         }
 
+        public void Clear() { _entries.Clear(); }
+
         /// <summary>기준 날짜보다 오래된 기록을 버린다. 버린 개수를 돌려준다.</summary>
         public int PruneOlderThan(DateTime cutoffUtc)
         {

@@ -15,6 +15,7 @@ Windows 탐색기가 보여주지 않는 **폴더 크기**를 보여주는 독�
 - 폴더 이동 시 페이드인, 계산 중 스피너 회전 등 모션
 - 우클릭 → **삭제해도 되는 폴더로 표시** (이 앱 안에만 기록, 폴더가 지워졌다 다시 생겨도 자동 재표시, 표시 합계 용량 표시) — [docs/features/deletable-marks.md](docs/features/deletable-marks.md)
 - 앱 아이콘 (exe, 창, 작업 표시줄) — [docs/features/app-icon.md](docs/features/app-icon.md)
+- 상단 메뉴 바(파일·보기·삭제 가능·설정·도움말)와 단축키, 삭제 가능 폴더를 즐겨찾기처럼 여는 메뉴 — [docs/features/menu-bar.md](docs/features/menu-bar.md)
 - 한 번 계산한 폴더 크기를 기억해 두었다가 바로 흐리게 보여 주고 뒤에서 다시 계산
 - 우클릭 → 탐색기에서 열기, 더블클릭 → 폴더 진입/파일은 기본 프로그램으로 열기
 

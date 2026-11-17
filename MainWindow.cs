@@ -17,7 +17,7 @@ using System.Windows.Shapes;
 
 namespace FolderSizeViewer
 {
-    public class MainWindow : Window
+    public partial class MainWindow : Window
     {
         private readonly Theme _theme;
         private readonly ObservableCollection<RowItem> _items = new ObservableCollection<RowItem>();
@@ -31,6 +31,8 @@ namespace FolderSizeViewer
         private readonly DeletableMarks _marks = new DeletableMarks(DeletableMarks.DefaultFilePath());
         private readonly SizeCache _sizeCache = new SizeCache(SizeCache.DefaultFilePath());
         private bool _sizeCacheBroken;
+        private Style _menuItemStyle;
+        private Style _separatorStyle;
         private FrameworkElement _spinner;
         private ContentControl _themeIconHost;
         private Border _contentBorder;
@@ -96,21 +98,29 @@ namespace FolderSizeViewer
 
         private void BuildUi()
         {
+            _menuItemStyle = MenuStyles.MenuItemStyle(_theme);
+            _separatorStyle = MenuStyles.SeparatorStyle(_theme);
+
             var root = new Grid();
+            root.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
             root.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
             root.RowDefinitions.Add(new RowDefinition { Height = new GridLength(1, GridUnitType.Star) });
             root.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
 
+            var menuBar = BuildMenuBar();
+            Grid.SetRow(menuBar, 0);
+
             var toolbar = BuildToolbar();
-            Grid.SetRow(toolbar, 0);
+            Grid.SetRow(toolbar, 1);
 
             _contentBorder = new Border { Background = _theme.SurfaceBackground, Margin = new Thickness(12, 10, 12, 10), CornerRadius = new CornerRadius(10) };
             _contentBorder.Child = BuildListView();
-            Grid.SetRow(_contentBorder, 1);
+            Grid.SetRow(_contentBorder, 2);
 
             var statusBar = BuildStatusBar();
-            Grid.SetRow(statusBar, 2);
+            Grid.SetRow(statusBar, 3);
 
+            root.Children.Add(menuBar);
             root.Children.Add(toolbar);
             root.Children.Add(_contentBorder);
             root.Children.Add(statusBar);
@@ -296,7 +306,7 @@ namespace FolderSizeViewer
                 if (item != null) { item.IsSelected = true; item.Focus(); }
             };
             _listView.ContextMenuOpening += OnContextMenuOpening;
-            _listView.ContextMenu = new ContextMenu();
+            _listView.ContextMenu = new ContextMenu { Template = MenuStyles.ContextMenuTemplate(_theme), HasDropShadow = false };
 
             ScrollViewer.SetVerticalScrollBarVisibility(_listView, ScrollBarVisibility.Auto);
             return _listView;
@@ -320,32 +330,20 @@ namespace FolderSizeViewer
             if (row == null) { e.Handled = true; return; }
             menu.Items.Clear();
 
-            var openMenu = new MenuItem { Header = "탐색기에서 열기" };
-            openMenu.Click += (s, a) =>
+            menu.Items.Add(NewMenuItem("탐색기에서 열기", null, () =>
             {
                 try { System.Diagnostics.Process.Start("explorer.exe", "/select,\"" + row.FullPath + "\""); } catch { }
-            };
-            menu.Items.Add(openMenu);
+            }));
 
             if (row.IsDirectory && DeletableMarks.IsMarkable(row.FullPath))
             {
-                menu.Items.Add(new Separator());
+                menu.Items.Add(new Separator { Style = _separatorStyle });
                 if (row.Mark == RowMark.Marked)
-                {
-                    var unmark = new MenuItem { Header = "삭제 가능 표시 해제" };
-                    unmark.Click += (s, a) => SetMark(row, false);
-                    menu.Items.Add(unmark);
-                }
+                    menu.Items.Add(NewMenuItem("삭제 가능 표시 해제", null, () => SetMark(row, false)));
                 else if (row.Mark == RowMark.Inherited)
-                {
-                    menu.Items.Add(new MenuItem { Header = "상위 폴더가 이미 삭제 가능으로 표시됨", IsEnabled = false });
-                }
+                    menu.Items.Add(NewMenuItem("상위 폴더가 이미 삭제 가능으로 표시됨", null, null));
                 else
-                {
-                    var mark = new MenuItem { Header = "삭제해도 되는 폴더로 표시 (이 앱에만 기록)" };
-                    mark.Click += (s, a) => SetMark(row, true);
-                    menu.Items.Add(mark);
-                }
+                    menu.Items.Add(NewMenuItem("삭제해도 되는 폴더로 표시 (이 앱에만 기록)", null, () => SetMark(row, true)));
             }
         }
 

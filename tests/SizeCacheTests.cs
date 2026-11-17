@@ -55,6 +55,9 @@ public static class SizeCacheTests
         c4.Save();
         Check("missing dir and file handled", c4.Count == 1 && File.Exists(System.IO.Path.Combine(tmp, "nope", "s.txt")));
 
+        c4.Clear();
+        Check("clear empties entries", c4.Count == 0 && !c4.TryGet(a, out e));
+
         passed = _pass;
         return _fail;
     }

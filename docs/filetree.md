@@ -8,6 +8,9 @@ FolderSizeViewer/
 ├── README.md               # 실행·빌드 방법, 기능 목록
 ├── build.ps1               # OS 내장 csc.exe 로 빌드하는 스크립트 (SVG 아이콘 리소스 임베드 포함)
 ├── Program.cs              # 진입점 ([STAThread] Main, Application 생성)
+├── MainWindow.Menu.cs      # 상단 메뉴 바, 삭제 가능 폴더 목록, 단축키 (MainWindow 의 일부)
+├── MenuStyles.cs           # 메뉴·우클릭 메뉴를 테마 색으로 그리는 모양
+├── AssemblyInfo.cs         # 제품명·버전 (정보 창과 exe 파일 속성에 쓰임)
 ├── MainWindow.cs           # 전체 UI 구성(XAML 없이 코드로) + 탐색/정렬/백그라운드 스캔 로직
 ├── Theme.cs                # 라이트/다크 팔레트, 시스템 다크모드 감지, 전환 애니메이션
 ├── Icons.cs                # SvgIcon 로더를 아이콘 이름별로 감싸는 얇은 창구
@@ -40,11 +43,13 @@ FolderSizeViewer/
     ├── filetree.md         # 이 파일
     ├── troubleshooting.md  # 증상/원인/해결 기록
     ├── plans/
-    │   └── 01-deletable-marks.md  # 삭제 가능 표시·크기 기억 계획서
+    │   ├── 01-deletable-marks.md  # 삭제 가능 표시·크기 기억 계획서
+    │   └── 02-menu-bar-and-favorites.md  # 메뉴 바·삭제 가능 바로가기 계획서
     └── features/           # 기능별 설명 문서
         ├── app-icon.md
         ├── deletable-marks.md
         ├── folder-size-calculation.md
+        ├── menu-bar.md
         ├── navigation.md
         └── theme-and-motion.md
 ```
