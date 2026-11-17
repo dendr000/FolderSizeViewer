@@ -9,6 +9,7 @@ FolderSizeViewer/
 ├── build.ps1               # OS 내장 csc.exe 로 빌드하는 스크립트 (SVG 아이콘 리소스 임베드 포함)
 ├── Program.cs              # 진입점 ([STAThread] Main, Application 생성)
 ├── MainWindow.Menu.cs      # 상단 메뉴 바, 삭제 가능 폴더 목록, 단축키 (MainWindow 의 일부)
+├── MainWindow.Favorites.cs # 삭제 가능 폴더 전체 목록 창 (검색, 이동, 표시 해제)
 ├── MenuStyles.cs           # 메뉴·우클릭 메뉴를 테마 색으로 그리는 모양
 ├── AssemblyInfo.cs         # 제품명·버전 (정보 창과 exe 파일 속성에 쓰임)
 ├── MainWindow.cs           # 전체 UI 구성(XAML 없이 코드로) + 탐색/정렬/백그라운드 스캔 로직

@@ -20,6 +20,7 @@ $sources = @(
     Join-Path $PSScriptRoot 'SizeCache.cs'
     Join-Path $PSScriptRoot 'MenuStyles.cs'
     Join-Path $PSScriptRoot 'MainWindow.Menu.cs'
+    Join-Path $PSScriptRoot 'MainWindow.Favorites.cs'
     Join-Path $PSScriptRoot 'AssemblyInfo.cs'
 )
 

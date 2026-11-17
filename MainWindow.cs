@@ -357,9 +357,16 @@ namespace FolderSizeViewer
             try { _marks.Save(); }
             catch (Exception ex) { FlashStatus("표시를 저장하지 못했습니다: " + ex.Message); }
 
+            RefreshRowMarks();
+        }
+
+        // 표시 기록이 바뀐 뒤 화면의 행·요약·(열려 있다면) 전체 목록 창을 새로 맞춘다.
+        private void RefreshRowMarks()
+        {
             foreach (var r in _items)
                 if (r.IsDirectory) r.Mark = _marks.GetState(r.FullPath);
             RefreshMarkSummary();
+            if (_favWindow != null) ReloadDeletableList();
         }
 
         private void RefreshMarkSummary()
